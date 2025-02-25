@@ -3,25 +3,17 @@ import { getUsers, getUsernames } from './services/database';
 
 const RankingList = () => {
   const [users, setUsers] = useState([]);
-  const [usernames, setUsernames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userData, usernameData] = await Promise.all([
-          getUsers(),
-          getUsernames()
-        ]);
+        const userData = await getUsers();
 
         if (Array.isArray(userData)) {
           const sortedUsers = userData.sort((a, b) => b.balance - a.balance);
           setUsers(sortedUsers);
-        }
-
-        if (Array.isArray(usernameData)) {
-          setUsernames(usernameData);
         }
       } catch (error) {
         setError('获取数据失败');
@@ -48,20 +40,6 @@ const RankingList = () => {
 
   return (
     <div className="h-full">
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">用户名列表</h2>
-        <div className="flex flex-col space-y-2">
-          {usernames.map((user) => (
-            <div
-              key={user.user_id}
-              className="p-3 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
-            >
-              <span className="font-medium">{user.username}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div>
         <h2 className="text-xl font-bold mb-4">用户排行榜</h2>
         <div className="space-y-2">
