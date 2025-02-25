@@ -15,9 +15,23 @@ db.init_app(app)
 
 @app.route('/api/users')
 def get_users():
-    users = User.query.all()
+    users = User.query.with_entities(User.user_id, User.username, User.balance).all()
     return jsonify({
-        'users': [{'id': user.id, 'username': user.username, 'balance': user.balance} for user in users]
+        'users': [{
+            'user_id': user.user_id,
+            'username': user.username,
+            'balance': user.balance
+        } for user in users]
+    })
+
+@app.route('/api/usernames')
+def get_usernames():
+    users = User.query.with_entities(User.user_id, User.username).all()
+    return jsonify({
+        'usernames': [{
+            'user_id': user.user_id,
+            'username': user.username
+        } for user in users]
     })
 
 @app.route('/api/health')
