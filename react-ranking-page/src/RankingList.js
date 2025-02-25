@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers } from './services/database';
+// import { getUsers } from './services/database';
 
 const RankingList = () => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 改为 false，因为不需要加载
   const [error, setError] = useState(null);
 
+  // 模拟数据
+  const mockUsers = [
+    { user_id: 1, username: "用户1", balance: 1000 },
+    { user_id: 2, username: "用户2", balance: 850 },
+    { user_id: 3, username: "用户3", balance: 750 },
+    { user_id: 4, username: "用户4", balance: 500 },
+  ];
+
   useEffect(() => {
+    // 注释掉原来的数据库请求代码
+    /*
     const fetchUsers = async () => {
       try {
         const data = await getUsers();
@@ -24,6 +34,10 @@ const RankingList = () => {
     };
 
     fetchUsers();
+    */
+
+    // 使用模拟数据
+    setUsers(mockUsers);
   }, []);
 
   if (loading) {
@@ -40,10 +54,11 @@ const RankingList = () => {
       <div className="space-y-2">
         {users.map((user, index) => (
           <div
-            key={user.id || index}
+            key={user.user_id || index}
             className="flex items-center p-3 bg-white rounded-lg hover:bg-gray-50"
           >
             <span>{user.username}</span>
+            <span className="ml-4">{user.balance}U</span>
           </div>
         ))}
       </div>

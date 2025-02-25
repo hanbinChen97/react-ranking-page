@@ -1,6 +1,7 @@
 import React from 'react';
 import RankingList from './RankingList';
 import UserDetails from './UserDetails';
+import DataChart from './DataChart';
 
 function App() {
   return (
@@ -13,10 +14,9 @@ function App() {
         </div>
         {/* 下方图表 */}
         <div className="bg-gray-100 p-4 rounded-lg h-1/2">
-          <div className="text-sm text-gray-500">TradingView K线图区域</div>
+          <DataChart />
         </div>
       </div>
-      
       {/* 右侧排行榜 */}
       <div className="w-1/3 bg-gray-100 p-4 rounded-lg">
         <RankingList />
