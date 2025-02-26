@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3001';
+// const API_URL = 'http://localhost:3001';
+const API_URL = 'https://animated-space-carnival-x9grwvpqp4p35r5-3001.app.github.dev';
 
 export async function getUsers() {
     try {
