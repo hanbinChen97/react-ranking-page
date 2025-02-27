@@ -15,7 +15,11 @@ db.init_app(app)
 
 @app.route('/api/users')
 def get_users():
-    users = User.query.with_entities(User.user_id, User.username, User.balance).all()
+    # 查询用户，排除 flag 为 'invalid' 的用户
+    users = User.query.filter(User.flag != 'INVALID').with_entities(
+        User.user_id, User.username, User.balance
+    ).all()
+    
     return jsonify({
         'users': [{
             'user_id': user.user_id,
@@ -23,20 +27,6 @@ def get_users():
             'balance': user.balance
         } for user in users]
     })
-
-@app.route('/api/usernames')
-def get_usernames():
-    users = User.query.with_entities(User.user_id, User.username).all()
-    return jsonify({
-        'usernames': [{
-            'user_id': user.user_id,
-            'username': user.username
-        } for user in users]
-    })
-
-@app.route('/api/health')
-def health_check():
-    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     with app.app_context():
