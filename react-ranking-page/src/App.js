@@ -10,11 +10,21 @@ const { Content } = Layout;
 function App() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedUserHistory, setSelectedUserHistory] = useState([]);
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const handleUserSelect = (userId, userHistory) => {
+  // 处理用户选择和历史记录更新
+  const handleUserSelect = (userId, userHistory, currentIndex) => {
     setSelectedUserId(userId);
     setSelectedUserHistory(userHistory || []);
+    setCurrentHistoryIndex(currentIndex || 0);
+  };
+
+  // 处理动画更新
+  const handleHistoryUpdate = (userId, currentIndex) => {
+    if (userId === selectedUserId) {
+      setCurrentHistoryIndex(currentIndex);
+    }
   };
 
   return (
@@ -32,13 +42,17 @@ function App() {
             <div className="flex-1">
               <DataChart 
                 balanceHistory={selectedUserHistory}
+                currentIndex={currentHistoryIndex}
                 loading={loading}
               />
             </div>
           </div>
           {/* 右侧排行榜 */}
           <Card className="w-1/3">
-            <RankingList onUserSelect={handleUserSelect} />
+            <RankingList 
+              onUserSelect={handleUserSelect}
+              onHistoryUpdate={handleHistoryUpdate}
+            />
           </Card>
         </div>
       </Content>

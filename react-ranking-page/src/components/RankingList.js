@@ -5,7 +5,7 @@ import { getAllBalanceHistory } from '../services/database';
 
 const { Title } = Typography;
 
-const RankingList = ({ onUserSelect }) => {
+const RankingList = ({ onUserSelect, onHistoryUpdate }) => {
     const [balanceHistory, setBalanceHistory] = useState([]); // 所有历史记录
     const [currentUsers, setCurrentUsers] = useState([]); // 当前显示的用户排行
     const [currentIndex, setCurrentIndex] = useState(0); // 当前显示记录的指针
@@ -31,6 +31,11 @@ const RankingList = ({ onUserSelect }) => {
                         newPointers.set(userId, currentPointer + 1);
                         newBalances.set(userId, records[currentPointer + 1]);
                         allFinished = false;
+                        
+                        // 通知父组件更新
+                        if (selectedUser && userId === selectedUser.user_id) {
+                            onHistoryUpdate(userId, currentPointer + 1);
+                        }
                     } else {
                         newBalances.set(userId, records[records.length - 1]);
                     }
@@ -54,7 +59,7 @@ const RankingList = ({ onUserSelect }) => {
             console.log('清理动画定时器');
             clearInterval(interval);
         };
-    }, []);
+    }, [selectedUser, onHistoryUpdate]);
 
     // 处理余额历史数据
     const processBalanceHistory = useCallback((history) => {
@@ -81,10 +86,10 @@ const RankingList = ({ onUserSelect }) => {
         });
         console.log('按用户分组后的数据:', Object.fromEntries(userHistories));
 
-        // 初始化每个用户的历史记录指针（倒数第10条记录）
+        // 初始化每个用户的历史记录指针（倒数第100条记录）
         const initialPointers = new Map();
         userHistories.forEach((records, userId) => {
-            const startIndex = Math.max(0, records.length - 10);
+            const startIndex = Math.max(0, records.length - 100);
             initialPointers.set(userId, startIndex);
         });
         console.log('初始指针位置:', Object.fromEntries(initialPointers));
@@ -135,7 +140,7 @@ const RankingList = ({ onUserSelect }) => {
         return () => {
             setAnimationStarted(false);
         };
-    }, [processBalanceHistory]);
+    }, []);
 
     // 获取用户历史记录
     const getUserHistory = useCallback((userId) => {
@@ -161,7 +166,8 @@ const RankingList = ({ onUserSelect }) => {
             if (user) {
                 setSelectedUser(user);
                 const userHistory = getUserHistory(userId);
-                onUserSelect(userId, userHistory);
+                const currentPointer = userHistoryPointers.get(userId) || 0;
+                onUserSelect(userId, userHistory, currentPointer);
             }
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -192,7 +198,7 @@ const RankingList = ({ onUserSelect }) => {
                     height: '640px',
                     maxHeight: 'calc(100vh - 200px)'
                 }}
-                dataSource={currentUsers.slice(0, 25)}
+                dataSource={currentUsers}
                 renderItem={(user, index) => (
                     <List.Item
                         key={user.user_id}
