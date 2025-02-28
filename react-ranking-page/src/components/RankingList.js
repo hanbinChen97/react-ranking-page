@@ -1,24 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { List, Spin, Typography } from 'antd';
 import { TrophyOutlined } from '@ant-design/icons';
-import { getUsers } from '../services/database';
+import { getAllBalanceHistory } from '../services/database';
 
 const { Title } = Typography;
 
 const RankingList = ({ onUserSelect }) => {
-    const [users, setUsers] = useState([]);
+    const [balanceHistory, setBalanceHistory] = useState([]); // 所有历史记录
+    const [currentUsers, setCurrentUsers] = useState([]); // 当前显示的用户排行
+    const [currentIndex, setCurrentIndex] = useState(0); // 当前显示记录的指针
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [usersMap, setUsersMap] = useState(new Map()); // 用户ID到最新余额记录的映射
 
+    // 处理余额历史数据
+    const processBalanceHistory = useCallback((history) => {
+        // 按时间戳排序
+        const sortedHistory = [...history].sort((a, b) => a.timestamp - b.timestamp);
+        setBalanceHistory(sortedHistory);
+        setCurrentIndex(sortedHistory.length - 1);
+
+        // 更新用户Map和当前用户列表
+        const latestBalances = new Map();
+        sortedHistory.forEach(record => {
+            const currentRecord = latestBalances.get(record.user_id);
+            if (!currentRecord || record.timestamp > currentRecord.timestamp) {
+                latestBalances.set(record.user_id, record);
+            }
+        });
+        
+        setUsersMap(latestBalances);
+        
+        // 转换为数组并排序
+        const users = Array.from(latestBalances.values())
+            .sort((a, b) => b.balance - a.balance);
+        
+        setCurrentUsers(users);
+    }, []);
+
+    // 获取数据
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const userData = await getUsers();
-                if (Array.isArray(userData)) {
-                    const sortedUsers = userData.sort((a, b) => b.balance - a.balance);
-                    setUsers(sortedUsers);
-                }
+                const history = await getAllBalanceHistory();
+                processBalanceHistory(history);
             } catch (error) {
                 setError('获取数据失败');
                 console.error('获取数据失败:', error);
@@ -30,7 +56,12 @@ const RankingList = ({ onUserSelect }) => {
         fetchData();
         const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [processBalanceHistory]);
+
+    // 获取用户历史记录
+    const getUserHistory = useCallback((userId) => {
+        return balanceHistory.filter(record => record.user_id === userId);
+    }, [balanceHistory]);
 
     const getRankingStyle = (index) => {
         switch (index) {
@@ -47,12 +78,12 @@ const RankingList = ({ onUserSelect }) => {
 
     const handleUserSelect = async (userId) => {
         try {
-            // 获取用户信息
-            const user = users.find(u => u.user_id === userId);
-            setSelectedUser(user);
-            
-            // 通知父组件更新选中的用户
-            onUserSelect(userId);
+            const user = usersMap.get(userId);
+            if (user) {
+                setSelectedUser(user);
+                const userHistory = getUserHistory(userId);
+                onUserSelect(userId, userHistory);
+            }
         } catch (error) {
             console.error('Error loading user data:', error);
         }
@@ -82,7 +113,7 @@ const RankingList = ({ onUserSelect }) => {
                     height: '640px',
                     maxHeight: 'calc(100vh - 200px)'
                 }}
-                dataSource={users.slice(0, 25)}
+                dataSource={currentUsers.slice(0, 25)}
                 renderItem={(user, index) => (
                     <List.Item
                         key={user.user_id}

@@ -1,41 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Layout, Card } from 'antd';
 import RankingList from './components/RankingList';
 import UserDetails from './components/UserDetails';
 import DataChart from './components/DataChart';
 import Header from './components/Header';
-import { getUserBalanceHistory } from './services/database';
 
 const { Content } = Layout;
 
 function App() {
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [balanceHistory, setBalanceHistory] = useState([]);
+  const [selectedUserHistory, setSelectedUserHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchBalanceHistory = async () => {
-      if (!selectedUserId) {
-        console.log('没有选中用户ID');
-        setBalanceHistory([]);
-        return;
-      }
-
-      console.log('开始获取用户余额历史，用户ID:', selectedUserId);
-      setLoading(true);
-      try {
-        const history = await getUserBalanceHistory(selectedUserId);
-        console.log('获取到的余额历史数据:', history);
-        setBalanceHistory(history);
-      } catch (error) {
-        console.error('获取余额历史失败:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBalanceHistory();
-  }, [selectedUserId]);
+  const handleUserSelect = (userId, userHistory) => {
+    setSelectedUserId(userId);
+    setSelectedUserHistory(userHistory || []);
+  };
 
   return (
     <Layout className="min-h-screen">
@@ -51,14 +31,14 @@ function App() {
             {/* 下方图表 */}
             <div className="flex-1">
               <DataChart 
-                balanceHistory={balanceHistory}
+                balanceHistory={selectedUserHistory}
                 loading={loading}
               />
             </div>
           </div>
           {/* 右侧排行榜 */}
           <Card className="w-1/3">
-            <RankingList onUserSelect={setSelectedUserId} />
+            <RankingList onUserSelect={handleUserSelect} />
           </Card>
         </div>
       </Content>
