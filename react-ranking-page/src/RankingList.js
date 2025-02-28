@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, getUsernames } from './services/database';
+import { getUsers } from './services/database';
 
-const RankingList = () => {
+const RankingList = ({ onUserSelect }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +46,8 @@ const RankingList = () => {
           {users.map((user, index) => (
             <div
               key={user.user_id}
-              className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-gray-50"
+              className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-gray-50 cursor-pointer"
+              onClick={() => onUserSelect(user.user_id)}
             >
               <div className="flex items-center space-x-4">
                 <span className="w-8 text-gray-500">#{index + 1}</span>

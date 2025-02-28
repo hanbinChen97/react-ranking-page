@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-from database import db, User
+from database import db, User, Position_Dev
 import os
 
 app = Flask(__name__)
@@ -26,6 +26,23 @@ def get_users():
             'username': user.username,
             'balance': user.balance
         } for user in users]
+    })
+
+@app.route('/api/user/<int:user_id>/positions')
+def get_user_positions(user_id):
+    # 获取最新的持仓记录
+    position = Position_Dev.query.filter_by(user_id=user_id).order_by(Position_Dev.datetime.desc()).first()
+    
+    if position is None:
+        return jsonify({
+            'error': 'User positions not found'
+        }), 404
+        
+    return jsonify({
+        'user_id': position.user_id,
+        'username': position.username,
+        'datetime': position.datetime,
+        'positions': position.positions_json
     })
 
 if __name__ == '__main__':
