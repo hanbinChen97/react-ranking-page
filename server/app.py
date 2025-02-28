@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-from database import db, User, Position_Dev
+from database import db, User, Position_Dev, UserBalance
 import os
 
 app = Flask(__name__)
@@ -20,12 +20,40 @@ def get_users():
         User.user_id, User.username, User.balance
     ).all()
     
+    # 在终端打印结果用于调试
+    print(f"\n所有用户:")
+    for user in users[-5:]:
+        print(f"用户 ID: {user.user_id}, 用户名: {user.username}, 余额: {user.balance}")
+
     return jsonify({
         'users': [{
             'user_id': user.user_id,
             'username': user.username,
             'balance': user.balance
         } for user in users]
+    })
+
+@app.route('/api/user/<int:user_id>/balance_history')
+def get_user_balance_history(user_id):
+    # 获取用户的余额历史记录
+    balance_history = UserBalance.query.filter_by(user_id=user_id).order_by(
+        UserBalance.balance_update_timestamp.desc()
+    ).all()
+    
+    result = [{
+        'balance': record.balance,
+        'update_time': record.balance_update_time,
+        'timestamp': record.balance_update_timestamp
+    } for record in balance_history]
+    
+    # 在终端打印结果用于调试
+    print(f"\n用户 ID {user_id} 的余额历史记录:")
+    for record in result[-5:]:
+        print(f"余额: {record['balance']}, 更新时间: {record['update_time']}")
+    
+    return jsonify({
+        'user_id': user_id,
+        'balance_history': result
     })
 
 @app.route('/api/user/<int:user_id>/positions')
@@ -37,6 +65,11 @@ def get_user_positions(user_id):
         return jsonify({
             'error': 'User positions not found'
         }), 404
+
+    # 在终端打印结果用于调试
+    print(f"\n用户 ID {user_id} 的持仓记录:")
+    print(f"持仓时间: {position.datetime}")
+    print(f"持仓信息: {position.positions_json}")
         
     return jsonify({
         'user_id': position.user_id,

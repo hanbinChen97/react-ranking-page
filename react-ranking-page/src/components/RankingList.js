@@ -9,6 +9,7 @@ const RankingList = ({ onUserSelect }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,6 +45,19 @@ const RankingList = ({ onUserSelect }) => {
         }
     };
 
+    const handleUserSelect = async (userId) => {
+        try {
+            // 获取用户信息
+            const user = users.find(u => u.user_id === userId);
+            setSelectedUser(user);
+            
+            // 通知父组件更新选中的用户
+            onUserSelect(userId);
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -72,8 +86,10 @@ const RankingList = ({ onUserSelect }) => {
                 renderItem={(user, index) => (
                     <List.Item
                         key={user.user_id}
-                        onClick={() => onUserSelect(user.user_id)}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors duration-200 rounded-lg mb-2"
+                        onClick={() => handleUserSelect(user.user_id)}
+                        className={`hover:bg-gray-50 cursor-pointer transition-colors duration-200 rounded-lg mb-2 ${
+                            selectedUser?.user_id === user.user_id ? 'bg-blue-50' : ''
+                        }`}
                     >
                         <div className="flex items-center w-full px-4 py-2">
                             <div className={`w-8 font-bold ${getRankingStyle(index)}`}>

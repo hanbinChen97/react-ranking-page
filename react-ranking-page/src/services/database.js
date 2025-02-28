@@ -35,3 +35,17 @@ export async function getUserPositions(userId) {
         return null;
     }
 }
+
+export async function getUserBalanceHistory(userId) {
+    try {
+        const response = await fetch(`${API_URL}/api/user/${userId}/balance_history`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.balance_history || [];
+    } catch (error) {
+        console.error('Error fetching user balance history:', error);
+        return [];
+    }
+}

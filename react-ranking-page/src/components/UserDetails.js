@@ -11,7 +11,10 @@ const UserDetails = ({ userId }) => {
 
   useEffect(() => {
     const fetchUserDetails = async () => {
-      if (!userId) return;
+      if (!userId) {
+        setUserDetails(null);
+        return;
+      }
       
       setLoading(true);
       try {
@@ -19,16 +22,24 @@ const UserDetails = ({ userId }) => {
         if (data) {
           setUserDetails(data);
           setError(null);
+        } else {
+          setUserDetails(null);
+          setError('未找到用户数据');
         }
       } catch (err) {
+        setUserDetails(null);
         setError('获取用户数据失败');
-        console.error(err);
+        console.error('获取用户详情失败:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserDetails();
+
+    // 每30秒刷新一次数据
+    const interval = setInterval(fetchUserDetails, 30000);
+    return () => clearInterval(interval);
   }, [userId]);
 
   if (!userId) {
@@ -42,7 +53,7 @@ const UserDetails = ({ userId }) => {
   if (loading) {
     return (
       <div className="h-[300px] flex items-center justify-center">
-        <Spin size="large" />
+        <Spin size="large" tip="加载中..." />
       </div>
     );
   }
@@ -72,7 +83,7 @@ const UserDetails = ({ userId }) => {
         <div className="grid grid-cols-2 gap-4">
           {positions.map((position, index) => (
             <Card 
-              key={index} 
+              key={`${position.symbol}-${index}`}
               size="small"
               className="shadow-sm hover:shadow-md transition-shadow"
             >
@@ -84,8 +95,12 @@ const UserDetails = ({ userId }) => {
               </div>
               <div className="space-y-1">
                 <Text type="secondary" className="block">数量: {position.pos_amt}</Text>
-                <Text type="secondary" className="block">合约数: {position.contracts}</Text>
-                <Text type="secondary" className="block">合约大小: {position.contract_size}</Text>
+                {position.contracts && (
+                  <Text type="secondary" className="block">合约数: {position.contracts}</Text>
+                )}
+                {position.contract_size && (
+                  <Text type="secondary" className="block">合约大小: {position.contract_size}</Text>
+                )}
               </div>
             </Card>
           ))}
