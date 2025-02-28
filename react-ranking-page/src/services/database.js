@@ -23,7 +23,12 @@ export async function getAllBalanceHistory() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        return data.balance_history || [];
+        console.log('API返回的原始数据:', data);
+        if (!data || !data.balance_history || !Array.isArray(data.balance_history)) {
+            console.error('API返回的数据格式不正确:', data);
+            return [];
+        }
+        return data.balance_history;
     } catch (error) {
         console.error('Error fetching balance history:', error);
         return [];

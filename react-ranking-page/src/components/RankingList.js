@@ -13,37 +13,115 @@ const RankingList = ({ onUserSelect }) => {
     const [error, setError] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [usersMap, setUsersMap] = useState(new Map()); // 用户ID到最新余额记录的映射
+    const [animationStarted, setAnimationStarted] = useState(false);
+    const [userHistoryPointers, setUserHistoryPointers] = useState(new Map()); // 每个用户的历史记录指针
+
+    // 动画函数
+    const startAnimation = useCallback((userHistories) => {
+        console.log('动画开始，用户历史数据:', userHistories);
+        const interval = setInterval(() => {
+            setUserHistoryPointers(prevPointers => {
+                let allFinished = true;
+                const newPointers = new Map(prevPointers);
+                const newBalances = new Map();
+
+                userHistories.forEach((records, userId) => {
+                    const currentPointer = prevPointers.get(userId);
+                    if (currentPointer < records.length - 1) {
+                        newPointers.set(userId, currentPointer + 1);
+                        newBalances.set(userId, records[currentPointer + 1]);
+                        allFinished = false;
+                    } else {
+                        newBalances.set(userId, records[records.length - 1]);
+                    }
+                });
+
+                if (allFinished) {
+                    console.log('动画结束');
+                    clearInterval(interval);
+                } else {
+                    setUsersMap(newBalances);
+                    const updatedUsers = Array.from(newBalances.values())
+                        .sort((a, b) => b.balance - a.balance);
+                    setCurrentUsers(updatedUsers);
+                }
+
+                return newPointers;
+            });
+        }, 1000);
+
+        return () => {
+            console.log('清理动画定时器');
+            clearInterval(interval);
+        };
+    }, []);
 
     // 处理余额历史数据
     const processBalanceHistory = useCallback((history) => {
+        console.log('收到原始历史数据:', history);
+        
+        if (!history || history.length === 0) {
+            console.log('历史数据为空');
+            setLoading(false);
+            return;
+        }
+
         // 按时间戳排序
         const sortedHistory = [...history].sort((a, b) => a.timestamp - b.timestamp);
+        console.log('排序后的历史数据:', sortedHistory);
         setBalanceHistory(sortedHistory);
-        setCurrentIndex(sortedHistory.length - 1);
 
-        // 更新用户Map和当前用户列表
-        const latestBalances = new Map();
+        // 按用户ID分组历史记录
+        const userHistories = new Map();
         sortedHistory.forEach(record => {
-            const currentRecord = latestBalances.get(record.user_id);
-            if (!currentRecord || record.timestamp > currentRecord.timestamp) {
-                latestBalances.set(record.user_id, record);
+            if (!userHistories.has(record.user_id)) {
+                userHistories.set(record.user_id, []);
             }
+            userHistories.get(record.user_id).push(record);
         });
+        console.log('按用户分组后的数据:', Object.fromEntries(userHistories));
+
+        // 初始化每个用户的历史记录指针（倒数第10条记录）
+        const initialPointers = new Map();
+        userHistories.forEach((records, userId) => {
+            const startIndex = Math.max(0, records.length - 10);
+            initialPointers.set(userId, startIndex);
+        });
+        console.log('初始指针位置:', Object.fromEntries(initialPointers));
+        setUserHistoryPointers(initialPointers);
+
+        // 根据初始指针设置用户Map
+        const initialBalances = new Map();
+        userHistories.forEach((records, userId) => {
+            const startIndex = initialPointers.get(userId);
+            initialBalances.set(userId, records[startIndex]);
+        });
+        console.log('初始余额数据:', Object.fromEntries(initialBalances));
         
-        setUsersMap(latestBalances);
+        setUsersMap(initialBalances);
         
         // 转换为数组并排序
-        const users = Array.from(latestBalances.values())
+        const users = Array.from(initialBalances.values())
             .sort((a, b) => b.balance - a.balance);
+        console.log('排序后的用户列表:', users);
         
         setCurrentUsers(users);
-    }, []);
+
+        // 开始动画
+        if (!animationStarted) {
+            console.log('开始动画');
+            setAnimationStarted(true);
+            startAnimation(userHistories);
+        }
+    }, [animationStarted, startAnimation]);
 
     // 获取数据
     useEffect(() => {
         const fetchData = async () => {
             try {
+                console.log('开始获取数据...');
                 const history = await getAllBalanceHistory();
+                console.log('获取到的原始数据:', history);
                 processBalanceHistory(history);
             } catch (error) {
                 setError('获取数据失败');
@@ -54,8 +132,9 @@ const RankingList = ({ onUserSelect }) => {
         };
 
         fetchData();
-        const interval = setInterval(fetchData, 30000);
-        return () => clearInterval(interval);
+        return () => {
+            setAnimationStarted(false);
+        };
     }, [processBalanceHistory]);
 
     // 获取用户历史记录
