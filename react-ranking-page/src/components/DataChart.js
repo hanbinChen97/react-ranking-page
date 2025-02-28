@@ -1,13 +1,22 @@
 import { createChart, LineSeries } from 'lightweight-charts';
 import React, { useRef, useEffect } from 'react';
+import { Card } from 'antd';
 
-export const ChartComponent = () => {
+const DataChart = () => {
     const chartContainerRef = useRef();
     
     useEffect(() => {
         const chart = createChart(chartContainerRef.current, {
-            width: 400,
-            height: 300,
+            width: chartContainerRef.current.clientWidth,
+            height: chartContainerRef.current.clientHeight,
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#333',
+            },
+            grid: {
+                vertLines: { color: '#f0f0f0' },
+                horzLines: { color: '#f0f0f0' },
+            },
         });
         
         const lineSeries = chart.addSeries(LineSeries);
@@ -42,14 +51,17 @@ export const ChartComponent = () => {
     }, []);
 
     return (
-        <div className="p-4 bg-white rounded-lg">
-            <h3 className="text-lg font-medium mb-2">数据趋势图</h3>
+        <Card 
+            title="数据趋势图" 
+            className="h-full"
+            bodyStyle={{ height: 'calc(100% - 57px)', padding: '12px' }}
+        >
             <div 
                 ref={chartContainerRef}
-                className="h-[300px] w-full bg-gray-100"
+                className="w-full h-full"
             />
-        </div>
+        </Card>
     );
 };
 
-export default ChartComponent;
+export default DataChart; 

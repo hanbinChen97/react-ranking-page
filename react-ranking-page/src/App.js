@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Layout } from 'antd';
+import { Layout, Card } from 'antd';
 import RankingList from './components/RankingList';
-import UserDetails from './UserDetails';
-import DataChart from './DataChart';
+import UserDetails from './components/UserDetails';
+import DataChart from './components/DataChart';
 import Header from './components/Header';
 
 const { Content } = Layout;
@@ -14,22 +14,22 @@ function App() {
     <Layout className="min-h-screen">
       <Header />
       <Content className="p-4">
-        <div className="flex gap-4">
+        <div className="flex gap-4 h-[calc(100vh-88px)]">
           {/* 左侧内容区域 */}
-          <div className="w-2/3 space-y-4">
-            {/* 上方卡片 */}
-            <div className="bg-gray-100 p-4 rounded-lg h-[calc(50vh-80px)]">
+          <div className="w-2/3 space-y-4 flex flex-col">
+            {/* 上方用户详情 */}
+            <Card className="flex-1">
               <UserDetails userId={selectedUserId} />
-            </div>
+            </Card>
             {/* 下方图表 */}
-            <div className="bg-gray-100 p-4 rounded-lg h-[calc(50vh-80px)]">
+            <div className="flex-1">
               <DataChart />
             </div>
           </div>
           {/* 右侧排行榜 */}
-          <div className="w-1/3 bg-gray-100 p-4 rounded-lg">
+          <Card className="w-1/3">
             <RankingList onUserSelect={setSelectedUserId} />
-          </div>
+          </Card>
         </div>
       </Content>
     </Layout>
