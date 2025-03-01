@@ -89,12 +89,16 @@ const UserDetails = ({ userId }) => {
             >
               <div className="flex items-center justify-between mb-2">
                 <Text strong>{position.symbol}</Text>
-                <Text className={position.side === 'LONG' ? 'text-green-600' : 'text-red-600'}>
+                <Text className={`px-2 py-1 rounded ${
+                  position.side === 'LONG' 
+                    ? 'bg-gradient-to-b from-green-400 to-green-600 text-white' 
+                    : 'bg-gradient-to-b from-red-400 to-red-600 text-white'
+                }`}>
                   {position.side}
                 </Text>
               </div>
               <div className="space-y-1">
-                <Text type="secondary" className="block">数量: {position.pos_amt}</Text>
+                <Text type="secondary" className="block">数量: {Math.abs(position.pos_amt)}</Text>
                 {position.contracts && (
                   <Text type="secondary" className="block">合约数: {position.contracts}</Text>
                 )}
