@@ -1,5 +1,5 @@
 import { createChart, LineSeries } from 'lightweight-charts';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Card, Spin } from 'antd';
 
 // 生成示例数据的辅助函数
@@ -31,102 +31,219 @@ const DataChart = ({ balanceHistory, currentIndex, loading }) => {
     const chartRef = useRef(null);
     const lineSeriesRef = useRef(null);
     
+    // 调试日志
     useEffect(() => {
-        if (!chartContainerRef.current) return;
+        console.log('DataChart props:', {
+            hasBalanceHistory: !!balanceHistory,
+            historyLength: balanceHistory?.length,
+            currentIndex,
+            loading,
+            containerHeight: chartContainerRef.current?.clientHeight,
+            containerWidth: chartContainerRef.current?.clientWidth
+        });
+    }, [balanceHistory, currentIndex, loading]);
 
-        // 创建图表（仅在组件挂载时创建一次）
-        if (!chartRef.current) {
-            chartRef.current = createChart(chartContainerRef.current, {
-                width: chartContainerRef.current.clientWidth,
-                height: chartContainerRef.current.clientHeight,
-                layout: {
-                    background: { type: 'solid', color: '#ffffff' },
-                    textColor: '#333',
-                },
-                grid: {
-                    vertLines: { color: '#f0f0f0' },
-                    horzLines: { color: '#f0f0f0' },
-                },
-                timeScale: {
-                    timeVisible: true,
-                    secondsVisible: false,
-                },
+    // 初始化图表
+    useEffect(() => {
+        let retryCount = 0;
+        const maxRetries = 5;
+
+        const initChart = () => {
+            if (!chartContainerRef.current) {
+                console.log('No container ref yet');
+                return false;
+            }
+            
+            const container = chartContainerRef.current;
+            console.log('Container dimensions:', {
+                width: container.clientWidth,
+                height: container.clientHeight
             });
 
-            // 添加线图系列
-            lineSeriesRef.current = chartRef.current.addSeries(LineSeries, { 
-                color: '#2962FF',
-                lineWidth: 2,
-                priceFormat: {
-                    type: 'price',
-                    precision: 2,
-                    minMove: 0.01,
-                },
-            });
-
-            // 处理窗口大小变化
-            const handleResize = () => {
-                if (chartRef.current && chartContainerRef.current) {
-                    chartRef.current.applyOptions({
-                        width: chartContainerRef.current.clientWidth,
-                        height: chartContainerRef.current.clientHeight,
-                    });
+            // 确保容器有有效的尺寸
+            if (!container.clientWidth || !container.clientHeight) {
+                console.log('Container has invalid dimensions');
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`Retrying initialization (${retryCount}/${maxRetries})...`);
+                    return false;
                 }
-            };
+                // 如果多次重试后仍然没有尺寸，使用固定尺寸
+                console.log('Using fallback dimensions');
+            }
 
-            window.addEventListener('resize', handleResize);
-            return () => {
-                window.removeEventListener('resize', handleResize);
+            try {
+                // 如果已经存在图表，先清除
                 if (chartRef.current) {
                     chartRef.current.remove();
                     chartRef.current = null;
+                    lineSeriesRef.current = null;
                 }
-            };
-        }
+
+                console.log('Creating new chart...');
+                const chart = createChart(container, {
+                    width: container.clientWidth || 800,
+                    height: Math.max(container.clientHeight || 300, 300),
+                    layout: {
+                        background: { type: 'solid', color: '#ffffff' },
+                        textColor: '#333',
+                    },
+                    grid: {
+                        vertLines: { color: '#f0f0f0' },
+                        horzLines: { color: '#f0f0f0' },
+                    },
+                    timeScale: {
+                        timeVisible: true,
+                        secondsVisible: false,
+                    },
+                    crosshair: {
+                        mode: 1,
+                        vertLine: {
+                            width: 8,
+                            color: '#C3BCDB44',
+                            style: 0,
+                        },
+                        horzLine: {
+                            color: '#9B7DFF',
+                            width: 1,
+                            style: 2,
+                        },
+                    },
+                });
+
+                const series = chart.addSeries(LineSeries, { 
+                    color: '#2962FF',
+                    lineWidth: 2,
+                    priceFormat: {
+                        type: 'price',
+                        precision: 2,
+                        minMove: 0.01,
+                    },
+                });
+
+                chartRef.current = chart;
+                lineSeriesRef.current = series;
+
+                console.log('Chart initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Error initializing chart:', error);
+                return false;
+            }
+        };
+
+        const attemptInit = () => {
+            if (!initChart() && retryCount < maxRetries) {
+                requestAnimationFrame(attemptInit);
+            }
+        };
+
+        attemptInit();
+
+        const handleResize = () => {
+            if (chartRef.current && chartContainerRef.current) {
+                const { clientWidth, clientHeight } = chartContainerRef.current;
+                chartRef.current.applyOptions({
+                    width: clientWidth || 800,
+                    height: Math.max(clientHeight || 300, 300),
+                });
+                chartRef.current.timeScale().fitContent();
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (chartRef.current) {
+                chartRef.current.remove();
+                chartRef.current = null;
+                lineSeriesRef.current = null;
+            }
+        };
     }, []);
 
     // 更新图表数据
     useEffect(() => {
-        if (!lineSeriesRef.current || !balanceHistory || balanceHistory.length === 0) return;
-
-        // 处理数据，只显示到当前索引的数据
-        const currentData = balanceHistory.slice(0, currentIndex + 1);
-        
-        // 使用Map处理重复时间戳
-        const timeValueMap = new Map();
-        currentData.forEach(item => {
-            const timestamp = Math.floor(item.timestamp / 1000);
-            const value = parseFloat(item.balance);
-            
-            if (!timeValueMap.has(timestamp) || item.timestamp > timeValueMap.get(timestamp).originalTimestamp) {
-                timeValueMap.set(timestamp, {
-                    value: value,
-                    originalTimestamp: item.timestamp
-                });
-            }
-        });
-
-        // 转换为数组并排序
-        const formattedData = Array.from(timeValueMap.entries())
-            .map(([time, data]) => ({
-                time: time,
-                value: data.value
-            }))
-            .sort((a, b) => a.time - b.time)
-            .filter(item => !isNaN(item.time) && !isNaN(item.value));
-
-        // 更新图表数据
-        if (formattedData.length > 0) {
-            lineSeriesRef.current.setData(formattedData);
-            chartRef.current?.timeScale().fitContent();
+        if (!balanceHistory || balanceHistory.length === 0) {
+            return;
         }
+
+        // 如果图表还没有初始化，等待下一次渲染
+        if (!lineSeriesRef.current) {
+            console.log('Chart not initialized yet, waiting...');
+            const timer = setTimeout(() => {
+                console.log('Retrying data update...');
+                updateChartData();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+
+        updateChartData();
     }, [balanceHistory, currentIndex]);
+
+    // 更新图表数据的函数
+    const updateChartData = () => {
+        if (!lineSeriesRef.current || !balanceHistory || balanceHistory.length === 0) {
+            console.log('Cannot update chart:', {
+                hasLineSeriesRef: !!lineSeriesRef.current,
+                hasBalanceHistory: !!balanceHistory,
+                historyLength: balanceHistory?.length
+            });
+            return;
+        }
+
+        try {
+            console.log('Updating chart data...');
+            const currentData = balanceHistory.slice(0, currentIndex + 1);
+            
+            const timeValueMap = new Map();
+            currentData.forEach(item => {
+                if (!item.timestamp || !item.balance) {
+                    console.log('Invalid data item:', item);
+                    return;
+                }
+                
+                const timestamp = Math.floor(item.timestamp / 1000);
+                const value = parseFloat(item.balance);
+                
+                if (!isNaN(timestamp) && !isNaN(value)) {
+                    if (!timeValueMap.has(timestamp) || item.timestamp > timeValueMap.get(timestamp).originalTimestamp) {
+                        timeValueMap.set(timestamp, {
+                            value: value,
+                            originalTimestamp: item.timestamp
+                        });
+                    }
+                }
+            });
+
+            const formattedData = Array.from(timeValueMap.entries())
+                .map(([time, data]) => ({
+                    time: parseInt(time, 10),
+                    value: data.value
+                }))
+                .sort((a, b) => a.time - b.time);
+
+            console.log('Formatted data sample:', formattedData.slice(0, 5));
+
+            if (formattedData.length > 0) {
+                lineSeriesRef.current.setData(formattedData);
+                chartRef.current?.timeScale().fitContent();
+            }
+        } catch (error) {
+            console.error('Error updating chart data:', error);
+        }
+    };
 
     return (
         <Card 
             title="余额变化趋势" 
             className="h-full"
-            bodyStyle={{ height: 'calc(100% - 57px)', padding: '12px' }}
+            bodyStyle={{ 
+                height: 'calc(100% - 57px)', 
+                padding: '12px',
+                display: 'flex',
+                flexDirection: 'column'
+            }}
         >
             {loading ? (
                 <div className="w-full h-full flex items-center justify-center">
@@ -136,7 +253,11 @@ const DataChart = ({ balanceHistory, currentIndex, loading }) => {
                 <div 
                     ref={chartContainerRef}
                     className="w-full h-full"
-                    style={{ minHeight: '300px' }}
+                    style={{ 
+                        minHeight: '300px',
+                        height: '300px',
+                        width: '100%'
+                    }}
                 />
             )}
         </Card>
