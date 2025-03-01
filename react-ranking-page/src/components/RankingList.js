@@ -1,6 +1,7 @@
 import React from 'react';
 import { List, Spin, Typography } from 'antd';
 import { TrophyOutlined } from '@ant-design/icons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const { Title } = Typography;
 
@@ -42,35 +43,68 @@ const RankingList = ({
                 <TrophyOutlined className="mr-2" />
                 用户排行榜
             </Title>
-            <List
+            <div
                 className="overflow-y-auto custom-scrollbar"
                 style={{
                     height: '640px',
                     maxHeight: 'calc(100vh - 200px)'
                 }}
-                dataSource={currentUsers}
-                renderItem={(user, index) => (
-                    <List.Item
-                        key={user.user_id}
-                        onClick={() => onUserSelect(user.user_id)}
-                        className={`hover:bg-gray-50 cursor-pointer transition-colors duration-200 rounded-lg mb-2 ${
-                            selectedUser?.user_id === user.user_id ? 'bg-blue-50' : ''
-                        }`}
-                    >
-                        <div className="flex items-center w-full px-4 py-2">
-                            <div className={`w-8 font-bold ${getRankingStyle(index)}`}>
-                                #{index + 1}
+            >
+                <AnimatePresence initial={false}>
+                    {currentUsers.map((user, index) => (
+                        <motion.div
+                            key={user.user_id}
+                            layoutId={user.user_id.toString()}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ 
+                                opacity: 1, 
+                                y: 0,
+                                transition: { type: "spring", stiffness: 300, damping: 30 }
+                            }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            layout
+                            onClick={() => onUserSelect(user.user_id)}
+                            className={`
+                                hover:bg-gray-50 
+                                cursor-pointer 
+                                transition-colors 
+                                duration-200 
+                                rounded-lg 
+                                mb-2
+                                ${selectedUser?.user_id === user.user_id ? 'bg-blue-50' : 'bg-white'}
+                                shadow-sm
+                                border border-gray-100
+                            `}
+                            whileHover={{ 
+                                scale: 1.02,
+                                transition: { duration: 0.2 }
+                            }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <div className="flex items-center w-full px-4 py-3">
+                                <motion.div 
+                                    className={`w-8 font-bold ${getRankingStyle(index)}`}
+                                    layoutId={`rank-${user.user_id}`}
+                                >
+                                    #{index + 1}
+                                </motion.div>
+                                <motion.div 
+                                    className="flex-1 ml-4"
+                                    layoutId={`username-${user.user_id}`}
+                                >
+                                    <div className="font-medium">{user.username}</div>
+                                </motion.div>
+                                <motion.div 
+                                    className="font-semibold text-blue-600"
+                                    layoutId={`balance-${user.user_id}`}
+                                >
+                                    {user.balance.toFixed(2)}U
+                                </motion.div>
                             </div>
-                            <div className="flex-1 ml-4">
-                                <div className="font-medium">{user.username}</div>
-                            </div>
-                            <div className="font-semibold text-blue-600">
-                                {user.balance.toFixed(2)}U
-                            </div>
-                        </div>
-                    </List.Item>
-                )}
-            />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
         </div>
     );
 };

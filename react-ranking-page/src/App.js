@@ -16,7 +16,8 @@ function App() {
     selectedUser,
     selectUser,
     userHistoryPointers,
-    balanceHistory
+    balanceHistory,
+    userPositions
   } = useBalanceData();
 
   // 获取选中用户的历史数据
@@ -53,6 +54,7 @@ function App() {
               error={error}
               selectedUser={selectedUser}
               onUserSelect={selectUser}
+              userPositions={userPositions}
             />
           </Card>
         </div>
