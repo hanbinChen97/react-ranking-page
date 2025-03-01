@@ -1,70 +1,138 @@
-# Getting Started with Create React App
+# 🏆 React 排行榜应用
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+这是一个使用 React 构建的排行榜展示应用，用于显示用户数据统计和排名信息。让数据展示更加生动有趣！ ✨
 
-## Available Scripts
+## 📁 项目结构
 
-In the project directory, you can run:
+```
+src/
+├── components/          # 可复用组件
+│   ├── DataChart.js    # 数据图表组件
+│   ├── RankingList.js  # 排行榜列表组件
+│   ├── UserDetails.js  # 用户详情组件
+│   └── Header.js       # 页面头部组件
+├── hooks/              # 自定义 Hooks
+│   └── useBalanceData.js  # 数据处理和状态管理 Hook
+├── services/           # 服务层
+│   └── database.js     # 数据库交互服务
+├── containers/         # 页面容器组件
+├── App.js             # 应用主组件
+└── index.js           # 应用入口文件
+```
 
-### `npm start`
+### 🔄 数据流动图
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```mermaid
+flowchart TB
+    DB[(数据库)] --> |原始数据| S[Services Layer]
+    S --> |数据处理| H[Hooks Layer]
+    H --> |状态管理| C[Components]
+    C --> |用户交互| H
+    
+    style DB fill:#f9f,stroke:#333,stroke-width:2px
+    style S fill:#bbf,stroke:#333,stroke-width:2px
+    style H fill:#dfd,stroke:#333,stroke-width:2px
+    style C fill:#ffd,stroke:#333,stroke-width:2px
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 🏗️ 组件架构
 
-### `npm test`
+```mermaid
+graph TB
+    A[App.js] --> H[Header]
+    A --> D[DataChart]
+    A --> R[RankingList]
+    A --> U[UserDetails]
+    
+    subgraph UI-Components[UI 组件层]
+    H
+    D
+    R
+    U
+    end
+    
+    subgraph Hooks[Hooks 层]
+    HD[useBalanceData]
+    end
+    
+    subgraph Services[服务层]
+    S[database.js]
+    end
+    
+    HD --> D & R & U
+    S --> HD
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    style UI-Components fill:#ffd,stroke:#333
+    style Hooks fill:#dfd,stroke:#333
+    style Services fill:#bbf,stroke:#333
+```
 
-### `npm run build`
+## 🚀 核心功能组件
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 组件说明
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. 📊 **DataChart 组件**
+   - 负责数据可视化展示
+   - 使用图表展示用户数据统计
+   - 支持多种数据展示模式
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. 🏅 **RankingList 组件**
+   - 展示用户排行榜
+   - 支持排序和筛选功能
+   - 响应式列表设计
 
-### `npm run eject`
+3. 👤 **UserDetails 组件**
+   - 显示用户详细信息
+   - 支持用户数据编辑
+   - 包含用户统计信息
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+4. 🎯 **Header 组件**
+   - 页面导航和标题
+   - 全局操作按钮
+   - 用户状态显示
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## ⚙️ 数据管理
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. 🎣 **Custom Hooks**
+   - useBalanceData: 处理用户余额数据
+   - 实现数据获取和状态管理
+   - 提供数据更新方法
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+2. 🔌 **服务层**
+   - database.js: 处理数据库操作
+   - 提供数据 CRUD 接口
+   - 实现数据持久化
 
-## Learn More
+## 💻 开发指南
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 🔧 安装依赖
+```bash
+npm install
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 🚀 启动开发服务器
+```bash
+npm start
+```
 
-### Code Splitting
+### 📦 构建生产版本
+```bash
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 🧪 运行测试
+```bash
+npm test
+```
 
-### Analyzing the Bundle Size
+## 🛠️ 技术栈
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- ⚛️ React 18
+- 🎣 React Hooks
+- 🎨 CSS Modules
+- ✨ Modern JavaScript (ES6+)
 
-### Making a Progressive Web App
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 📜 许可证
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT License
