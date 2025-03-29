@@ -23,7 +23,7 @@ src/
 ### 🔄 数据流动图
 
 ```mermaid
-flowchart TB
+flowchart LR
     DB[(数据库)] --> |原始数据| S[Services Layer]
     S --> |数据处理| H[Hooks Layer]
     H --> |状态管理| C[Components]
